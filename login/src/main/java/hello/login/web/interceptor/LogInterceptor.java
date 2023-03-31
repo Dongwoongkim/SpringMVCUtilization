@@ -1,0 +1,60 @@
+package hello.login.web.interceptor;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.ModelAndView;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.lang.reflect.Method;
+import java.util.UUID;
+
+@Slf4j
+public class LogInterceptor implements HandlerInterceptor {
+    public static final String LOG_ID = "logId";
+
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
+            throws Exception
+    {
+        log.info("------------------------------");
+        String requestURI = request.getRequestURI();
+        String uuid = UUID.randomUUID().toString();
+        request.setAttribute(LOG_ID,uuid);
+
+        if (handler instanceof HandlerMethod)
+        {
+            HandlerMethod hm = (HandlerMethod) handler;
+            Method method = hm.getMethod();
+            
+            log.info("Method {}",method);
+        }
+
+        log.info("REQUEST [{}][{}][{}]", uuid, requestURI, handler);
+        return true;
+    }
+
+    @Override
+    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView)
+            throws Exception
+    {
+        log.info("postHandle [{}]", modelAndView);
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
+            throws Exception
+    {
+        String requestURI = request.getRequestURI();
+        String logId = (String)request.getAttribute(LOG_ID);
+        log.info("RESPONSE [{}][{}]", logId, requestURI);
+
+        // 컨트롤러로부터 예외 넘겨 받았을 경우
+        if (ex != null) {
+            log.error("afterCompletion error!!", ex);
+        }
+
+        log.info("------------------------------");
+    }
+}
